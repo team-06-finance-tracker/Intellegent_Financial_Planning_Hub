@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Financial Transactions and Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .btn-edit, .btn-delete {
+            background-color: #007bff;
+            color: white;
+            padding: 5px 10px;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .btn-delete {
+            background-color: #dc3545;
+        }
+        .btn-edit:hover {
+            background-color: #0056b3;
+        }
+        .btn-delete:hover {
+            background-color: #c82333;
+        }
+        .chart-container {
+            margin-top: 20px;
+        }
+        .form-container {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .form-container h2 {
+            margin-top: 0;
+        }
+        .form-container form {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-container input, .form-container button {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .form-container button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        .form-container button:hover {
+            background-color: #0056b3;
+        }
+        .export-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .export-button:hover {
+            background-color: #218838;
+        }
+        .chart-type-selector {
+            margin-top: 20px;
+        }
+        .chart-type-selector select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f8f8f8;
+            cursor: pointer;
+        }
+        .chart-type-selector select:hover {
+            background-color: #e8e8e8;
+        }
+        .alert {
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .alert-warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+        }
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Financial Transactions</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div id="alert-container">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record.date }}</td>
+                    <td>{{ record.category }}</td>
+                    <td>{{ record.amount }}</td>
+                    <td>
+                        <a href="{{ url_for('edit_record', record_id=record.id) }}" class="btn btn-edit">Edit</a>
+                        <form action="{{ url_for('delete_record', record_id=record.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-delete">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if notification %}
+        <p>{{ notification }}</p>
+        {% endif %}
+        <div class="form-container">
+            <h2>Add Financial Record</h2>
+            <form method="POST" action="{{ url_for('add_record') }}">
+                <input type="text" name="category" placeholder="Category" required>
+                <input type="number" name="amount" placeholder="Amount" required>
+                <button type="submit">Add Record</button>
+            </form>
+        </div>
+        <div class="form-container">
+            <h2>Set Budget Limit</h2>
+            <p>Current Budget: ₹{{ budget_limit }}</p>
+            <form method="POST" action="{{ url_for('set_budget_limit') }}">
+                <input type="number" name="budget_limit" placeholder="Budget Limit (₹)" required>
+                <input type="date" name="start_date" placeholder="Start Date" required>
+                <input type="date" name="end_date" placeholder="End Date" required>
+                <h3>Category-wise Budgets</h3>
+                {% for record in records %}
+                <input type="number" name="category_budget_{{ record.category }}" placeholder="Budget for {{ record.category }}" required>
+                {% endfor %}
+                <button type="submit">Set Budget Limit</button>
+            </form>
+        </div>
+        <div class="chart-container">
+            <h2>Category-wise Spending</h2>
+            <div class="chart-type-selector">
+                <label for="chartType">Select Chart Type:</label>
+                <select id="chartType" onchange="updateChartType()">
+                    <option value="bar">Bar Chart</option>
+                    <option value="radar">Radar Chart</option>
+                    <option value="pie">Pie Chart</option>
+                    <option value="scatter">Scatter Plot</option>
+                    <option value="line">Line Plot</option>
+                </select>
+            </div>
+            <canvas id="categoryChart"></canvas>
+        </div>
+        <a href="{{ url_for('export_pdf') }}" class="export-button">Export to PDF</a>
+        <a href="{{ url_for('export_excel') }}" class="export-button">Export to Excel</a>
+    </div>
+    <script>
+        let categoryChart;
+        const chartTypeSelector = document.getElementById('chartType');
+
+        function updateChartType() {
+            const selectedChartType = chartTypeSelector.value;
+            fetch('/dashboard_data.json')
+                .then(response => response.json())
+                .then(data => {
+                    const categorySpending = data.category_spending;
+                    const categoryBudgets = data.category_budgets;
+                    const categoryLabels = Object.keys(categorySpending);
+                    const categoryData = Object.values(categorySpending);
+                    const categoryBudgetData = categoryLabels.map(label => categoryBudgets[label] || 0);
+
+                    if (categoryChart) {
+                        categoryChart.destroy();
+                    }
+
+                    const ctxCategory = document.getElementById('categoryChart').getContext('2d');
+                    categoryChart = new Chart(ctxCategory, {
+                        type: selectedChartType,
+                        data: {
+                            labels: categoryLabels,
+                            datasets: [
+                                {
+                                    label: 'Amount Spent (₹)',
+                                    data: categoryData,
+                                    backgroundColor: selectedChartType === 'pie' ? categoryLabels.map(() => getRandomColor()) : '#36A2EB',
+                                    hoverBackgroundColor: selectedChartType === 'pie' ? categoryLabels.map(() => getRandomColor()) : '#36A2EB'
+                                },
+                                {
+                                    label: 'Budget (₹)',
+                                    data: categoryBudgetData,
+                                    backgroundColor: selectedChartType === 'pie' ? categoryLabels.map(() => getRandomColor()) : '#FFCE56',
+                                    hoverBackgroundColor: selectedChartType === 'pie' ? categoryLabels.map(() => getRandomColor()) : '#FFCE56'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: selectedChartType === 'bar' || selectedChartType === 'line' ? {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            } : {}
+                        }
+                    });
+                })
+                .catch(error => console.error('Error loading JSON:', error));
+        }
+
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateChartType();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Budget Alerts</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .alert-container {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .alert-warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+        }
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        .category-analysis {
+            margin-top: 20px;
+        }
+        .category-analysis h2 {
+            color: #333;
+        }
+        .category-analysis p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Budget Alerts</h1>
+        <div id="alertContainer" class="alert-container">
+            {% for alert in alerts %}
+                <div class="alert alert-{{ alert.type }}">{{ alert.message }}</div>
+            {% endfor %}
+        </div>
+        <div id="categoryAnalysis" class="category-analysis">
+            <h2>Category-wise Budget Usage</h2>
+            {% for analysis in category_analysis %}
+                <p>{{ analysis.category }}: Spent ₹{{ analysis.spent }} of ₹{{ analysis.budget }} ({{ analysis.percentage }}%)</p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

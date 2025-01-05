@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Categories</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        input[type="text"], input[type="number"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Manage Categories</h1>
+        <form method="POST">
+            <label for="category_name">Category Name:</label>
+            <input type="text" id="category_name" name="category_name" required>
+            <label for="budget_limit">Budget Limit:</label>
+            <input type="number" id="budget_limit" name="budget_limit" required>
+            <button type="submit">Add Category</button>
+        </form>
+        <h2>Existing Categories</h2>
+        <ul>
+            {% for category in categories %}
+            <li>{{ category.name }} - Budget Limit: ₹{{ category.budget_limit }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>

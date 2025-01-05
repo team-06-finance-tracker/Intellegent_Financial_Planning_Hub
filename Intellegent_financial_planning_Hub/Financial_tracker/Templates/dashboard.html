@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .nav-links a {
+            margin-right: 10px;
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+
+        .chart-section {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-section h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .flex-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .chart-container {
+            flex: 1;
+            min-width: 300px;
+            text-align: center;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .button-container {
+            margin-top: 20px;
+        }
+
+        .button-container a {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .button-container a:hover {
+            background-color: #0056b3;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .alert-warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+        }
+
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Dashboard</h1>
+        <p>Welcome, {{ current_user.username }}!</p>
+        <div class="nav-links">
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+        <div id="alert-container"></div>
+        
+        <!-- Budget Usage Section -->
+        <div class="chart-section">
+            <h2>Budget Usage</h2>
+            <div class="flex-container">
+                <!-- Doughnut Chart -->
+                <div class="chart-container">
+                    <canvas id="budgetChart"></canvas>
+                </div>
+                <!-- Bar Chart -->
+                <div class="chart-container">
+                    <canvas id="categoryBarChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="button-container">
+            <a href="{{ url_for('transactions') }}">View Transactions</a>
+            <a href="{{ url_for('budget_alerts') }}">Budget Alerts</a>
+        </div>
+    </div>
+
+    <script>
+        // Fetch the data from a JSON file
+        fetch('/dashboard_data.json')
+            .then(response => response.json())
+            .then(data => {
+                const budgetLimit = data.budget_limit; 
+                const totalSpent = data.total_spent;
+                const remainingBudget = budgetLimit - totalSpent;
+
+                // Doughnut Chart
+                const budgetCtx = document.getElementById('budgetChart').getContext('2d');
+                new Chart(budgetCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Spent', 'Remaining'],
+                        datasets: [{
+                            data: [totalSpent, remainingBudget],
+                            backgroundColor: ['#FF6384', '#36A2EB'],
+                            hoverBackgroundColor: ['#FF6384', '#36A2EB']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(tooltipItem) {
+                                        const value = tooltipItem.raw || 0;
+                                        return `₹${value}`;
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '70%'
+                    }
+                });
+
+                // Bar Chart
+                const categoryLabels = Object.keys(data.category_spending);
+                const categoryValues = Object.values(data.category_spending);
+
+                const barCtx = document.getElementById('categoryBarChart').getContext('2d');
+                new Chart(barCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: categoryLabels,
+                        datasets: [{
+                            label: 'Amount Spent (₹)',
+                            data: categoryValues,
+                            backgroundColor: '#36A2EB',
+                            borderColor: '#007bff',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Amount (₹)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Categories'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Display alerts
+                const alertContainer = document.getElementById('alert-container');
+                if (totalSpent >= budgetLimit) {
+                    alertContainer.innerHTML = '<div class="alert alert-danger">You have exceeded your budget limit!</div>';
+                } else if (totalSpent >= 0.9 * budgetLimit) {
+                    alertContainer.innerHTML = '<div class="alert alert-warning">You are about to reach your budget limit!</div>';
+                } else {
+                    alertContainer.innerHTML = '<div class="alert alert-success">You are within your budget limit.</div>';
+                }
+            })
+            .catch(error => console.error('Error loading JSON:', error));
+    </script>
+</body>
+</html>
