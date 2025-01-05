@@ -1,0 +1,14 @@
+{
+  "budget_limit": 6000.0,
+  "total_spent": 4650.0,
+  "category_spending": {
+    "food": 20.0,
+    "shopping": 50.0,
+    "education": 4500.0
+  },
+  "category_budgets": {
+    "food": 100.0,
+    "shopping": 100.0,
+    "education": 5000.0
+  }
+}
